@@ -61,9 +61,13 @@ func (m *Mutex) Lock(d ...time.Duration) error {
 	tk := time.NewTicker(300 * time.Millisecond)
 	for i := 0; i < m.tryCount; i++ {
 
-		_, err := m.SetNX(m.key, value, to).Result()
+		b, err := m.SetNX(m.key, value, to).Result()
+		// 出错直接返回
+		if err != nil {
+			return err
+		}
 		// 锁住直接返回
-		if err == nil {
+		if b {
 			return nil
 		}
 
