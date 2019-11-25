@@ -2,7 +2,7 @@ package redlock
 
 import (
 	"fmt"
-	redis "github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
