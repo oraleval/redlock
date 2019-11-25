@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	redis "github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis"
 	"github.com/satori/go.uuid"
 	"time"
 )

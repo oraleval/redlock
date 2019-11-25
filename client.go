@@ -1,7 +1,7 @@
 package redlock
 
 import (
-	redis "github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis"
 )
 
 type Client struct {
