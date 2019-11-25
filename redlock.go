@@ -26,7 +26,7 @@ func New(c *Client, key string) *Mutex {
 		return nil
 	}
 
-	return &Mutex{key: key, Client: c, tryCount: 16, ctx: context.Background()}
+	return &Mutex{key: key, Client: c, tryCount: 100, ctx: context.Background()}
 }
 
 // value使用uuidv4
@@ -58,10 +58,10 @@ func (m *Mutex) Lock(d ...time.Duration) error {
 		m.value = value
 	}
 
-	tk := time.NewTicker(300 * time.Millisecond)
+	tk := time.NewTicker(100 * time.Millisecond)
 	for i := 0; i < m.tryCount; i++ {
 
-		b, err := m.SetNX(m.key, value, to).Result()
+		b, err := m.SetNX(m.key, m.value, to).Result()
 		// 出错直接返回
 		if err != nil {
 			return err

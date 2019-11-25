@@ -1,6 +1,7 @@
 package redlock
 
 import (
+	"fmt"
 	redis "github.com/go-redis/redis/v7"
 	"github.com/stretchr/testify/assert"
 	"sync"
@@ -31,7 +32,6 @@ func Test_Redlock_lock_unlock(t *testing.T) {
 
 	_, err := client.Ping().Result()
 	assert.NoError(t, err)
-	//	fmt.Println(pong, err)
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -42,39 +42,53 @@ func Test_Redlock_lock_unlock(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		m := NewClient(client).NewMutex("123")
+		m := NewClient(client).NewMutex("testkey")
 		for i := 0; i < number; i++ {
-			err := m.Lock()
-			assert.NoError(t, err)
-			if err != nil {
-				return
-			}
+			func() {
+				defer func() {
+					err = m.Unlock()
+					assert.NoError(t, err)
+					if err != nil {
+						fmt.Printf("unlock fail:%s\n", err)
+						return
+					}
+				}()
 
-			count++
-			err = m.Unlock()
-			assert.NoError(t, err)
-			if err != nil {
-				return
-			}
+				err := m.Lock()
+				assert.NoError(t, err)
+				if err != nil {
+					fmt.Printf("lock fail:%s\n", err)
+					return
+				}
+
+				count++
+			}()
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		m := NewClient(client).NewMutex("123")
+		m := NewClient(client).NewMutex("testkey")
 		for i := 0; i < number; i++ {
-			err := m.Lock()
-			assert.NoError(t, err)
-			if err != nil {
-				return
-			}
+			func() {
+				defer func() {
+					err = m.Unlock()
+					assert.NoError(t, err)
+					if err != nil {
+						fmt.Printf("unlock fail:%s\n", err)
+						return
+					}
+				}()
 
-			count++
-			err = m.Unlock()
-			assert.NoError(t, err)
-			if err != nil {
-				return
-			}
+				err := m.Lock()
+				assert.NoError(t, err)
+				if err != nil {
+					fmt.Printf("lock fail:%s\n", err)
+					return
+				}
+
+				count++
+			}()
 		}
 	}()
 }
