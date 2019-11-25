@@ -66,7 +66,6 @@ func (m *Mutex) Lock(d ...time.Duration) error {
 		if err == nil {
 			return nil
 		}
-		fmt.Printf("i = %d=======%s=== %s\n", i, value, err)
 
 		// 锁失败的,说明已经被锁住了，就轮训等待
 		// 加入context是为了方便外层直接取消

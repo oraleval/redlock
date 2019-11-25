@@ -32,9 +32,11 @@ func Test_Redlock_lock_unlock(t *testing.T) {
 		defer wg.Done()
 		m := NewClient(client).NewMutex("123")
 		for i := 0; i < number; i++ {
-			m.Lock()
+			err := m.Lock()
+			assert.NoError(t, err)
 			count++
-			m.Unlock()
+			err = m.Unlock()
+			assert.NoError(t, err)
 		}
 	}()
 
@@ -42,9 +44,11 @@ func Test_Redlock_lock_unlock(t *testing.T) {
 		defer wg.Done()
 		m := NewClient(client).NewMutex("123")
 		for i := 0; i < number; i++ {
-			m.Lock()
+			err := m.Lock()
+			assert.NoError(t, err)
 			count++
-			m.Unlock()
+			err = m.Unlock()
+			assert.NoError(t, err)
 		}
 	}()
 }
