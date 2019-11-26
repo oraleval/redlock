@@ -1,9 +1,11 @@
 package redlock
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
+	"log"
 	"sync"
 	"testing"
 	"time"
@@ -28,6 +30,49 @@ func Test_Redlock_Fail(t *testing.T) {
 type retries struct {
 	to       time.Duration
 	tryCount int
+}
+
+func Test_Redlock_Withcontext(t *testing.T) {
+	log.SetFlags(log.Lmicroseconds)
+	client := redis.NewClient(&redis.Options{
+		Addr: "127.0.0.1:6379",
+		DB:   0,
+		// 测试的时候自己配置
+	})
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	defer wg.Wait()
+
+	go func() {
+		defer wg.Done()
+		ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
+		m := NewClient(client).NewMutex("aaa").WithContext(ctx)
+		log.Printf("A:start lock\n")
+
+		err := m.Lock()
+
+		log.Printf("A:lock return:%v\n", err)
+		time.Sleep(time.Second * 5)
+
+		m.Unlock()
+
+	}()
+
+	go func() {
+		defer wg.Done()
+		ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
+		m := NewClient(client).NewMutex("aaa").WithContext(ctx)
+		log.Printf("B:start lock\n")
+
+		err := m.Lock()
+
+		log.Printf("B:lock return:%v\n", err)
+		time.Sleep(time.Second * 5)
+
+		m.Unlock()
+
+	}()
 }
 
 func Test_Redlock_maxRetries(t *testing.T) {
