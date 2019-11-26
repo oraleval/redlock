@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+var (
+	LockTime      = 3 * time.Second               //默认lock时间
+	RetryInterval = 100 * time.Millisecond        //默认间隔时间
+	Retries       = int(LockTime / RetryInterval) //默认重试次数
+)
+
 var ErrCanced = errors.New("canced")
 
 // Mutext定义
@@ -26,7 +32,7 @@ func New(c *Client, key string) *Mutex {
 		return nil
 	}
 
-	return &Mutex{key: key, Client: c, tryCount: 100, ctx: context.Background()}
+	return &Mutex{key: key, Client: c, tryCount: Retries, ctx: context.Background()}
 }
 
 // value使用uuidv4
@@ -46,11 +52,21 @@ func (m *Mutex) WithContext(ctx context.Context) *Mutex {
 	return m
 }
 
+// 取最大重试次数
+func maxRetries(timeout time.Duration) (retries int) {
+	retries = Retries
+	if r := int(timeout / RetryInterval); r > retries {
+		retries = r
+	}
+	return
+}
+
 // 锁
 func (m *Mutex) Lock(d ...time.Duration) error {
-	to := 3 * time.Second
+	to := LockTime
 	if len(d) > 0 {
 		to = d[0]
+		m.tryCount = maxRetries(to)
 	}
 
 	value := getValue()
@@ -58,7 +74,7 @@ func (m *Mutex) Lock(d ...time.Duration) error {
 		m.value = value
 	}
 
-	tk := time.NewTicker(100 * time.Millisecond)
+	tk := time.NewTicker(RetryInterval)
 	for i := 0; i < m.tryCount; i++ {
 
 		b, err := m.SetNX(m.key, m.value, to).Result()

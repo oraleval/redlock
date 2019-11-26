@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
+	"time"
 )
 
 var count int
@@ -22,6 +23,23 @@ func Test_Redlock_Fail(t *testing.T) {
 
 	err := NewClient(client).NewMutex("aaa").Lock()
 	assert.Error(t, err)
+}
+
+type retries struct {
+	to       time.Duration
+	tryCount int
+}
+
+func Test_Redlock_maxRetries(t *testing.T) {
+	tests := []retries{
+		{time.Second, Retries},
+		{3 * time.Second, Retries},
+		{10 * time.Second, int((10 * time.Second) / RetryInterval)},
+	}
+
+	for _, v := range tests {
+		assert.Equal(t, maxRetries(v.to), v.tryCount)
+	}
 }
 
 func Test_Redlock_lock_unlock(t *testing.T) {
@@ -46,7 +64,7 @@ func Test_Redlock_lock_unlock(t *testing.T) {
 		for i := 0; i < number; i++ {
 			func() {
 				defer func() {
-					err = m.Unlock()
+					err := m.Unlock()
 					assert.NoError(t, err)
 					if err != nil {
 						fmt.Printf("unlock fail:%s\n", err)
